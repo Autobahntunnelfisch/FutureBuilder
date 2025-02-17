@@ -8,11 +8,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // TODO: initiate controllers
-  }
+  final TextEditingController _controller = TextEditingController();
+  Future<String>? cityFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -22,20 +19,40 @@ class _MainScreenState extends State<MainScreen> {
         child: Center(
           child: Column(
             children: [
-              const TextField(
-                decoration: InputDecoration(
+              const SizedBox(
+                height: 142,
+              ),
+              TextField(
+                controller: _controller,
+                decoration: const InputDecoration(
                     border: OutlineInputBorder(), labelText: "Postleitzahl"),
               ),
               const SizedBox(height: 32),
               OutlinedButton(
                 onPressed: () {
-                  // TODO: implementiere Suche
+                  setState(() {
+                    cityFuture = getCityFromZip(_controller.text);
+                  });
                 },
                 child: const Text("Suche"),
               ),
               const SizedBox(height: 32),
-              Text("Ergebnis: Noch keine PLZ gesucht",
-                  style: Theme.of(context).textTheme.labelLarge),
+              FutureBuilder(
+                  future: cityFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.done) {
+                      String postCode = snapshot.data ?? "";
+                      return Text(postCode);
+                    } else if (snapshot.hasError) {
+                      return const Text("Internetprobleme");
+                    } else {
+                      return Text("Ergebnis: Noch keine PLZ gesucht",
+                          style: Theme.of(context).textTheme.labelLarge);
+                    }
+                  }),
             ],
           ),
         ),
